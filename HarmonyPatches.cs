@@ -90,8 +90,8 @@ namespace PiercingProjectiles
 			{
 				if (PiercingProjectiles.Settings.DebugOutput)
 					PiercingProjectiles.Message(
-						$"Type: '{attackerWeapon.CurrentUsageItem?.WeaponClass}' Hits: {numDamagedAgents} -- A: '{attacker?.Name}' V: '{victim?.Name}'" +
-						$"\nBefore: Pierce: {(pierce ? 1 : 0)} - Dmg: '{blow.InflictedDamage} / {blow.AbsorbedByArmor} ({blow.InflictedDamage / (blow.InflictedDamage + blow.AbsorbedByArmor) * 100.0:N1}%)'",
+						$"-- Type: '{attackerWeapon.CurrentUsageItem?.WeaponClass}' Hits: {numDamagedAgents} Attk: '{attacker?.Name}' Vict: '{victim?.Name}'" +
+						$"\nBefore: Pierce: {(pierce ? 1 : 0)} Dmg: '{blow.InflictedDamage} / {blow.AbsorbedByArmor} ({blow.InflictedDamage / (blow.InflictedDamage + blow.AbsorbedByArmor) * 100.0:N1}%)'",
 						false, Colors.White);
 
 				// already is piercing; likely handled otherwise
@@ -188,7 +188,7 @@ namespace PiercingProjectiles
 
 				if (PiercingProjectiles.Settings.DebugOutput)
 					PiercingProjectiles.Message(
-						$"After:  Pierce: {(pierce ? 1 : 0)} - Dmg: '{blow.InflictedDamage} / {blow.AbsorbedByArmor} ({blow.InflictedDamage / (blow.InflictedDamage + blow.AbsorbedByArmor) * 100.0:N1}%)'", 
+						$"After:  Pierce: {(pierce ? 1 : 0)} Dmg: '{blow.InflictedDamage} / {blow.AbsorbedByArmor} ({blow.InflictedDamage / (blow.InflictedDamage + blow.AbsorbedByArmor) * 100.0:N1}%)'", 
 						false, Colors.White);
 			}
 			catch (Exception exc)
