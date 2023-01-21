@@ -40,6 +40,16 @@ namespace PiercingProjectiles
 			"General",
 			GroupOrder = 0)]
 		public bool PierceOnKillingBlowOnly { get; set; } = false;
+
+		[SettingPropertyBool(
+			"Debug Text for Projectile Hits",
+			RequireRestart = false,
+			HintText = "Show debug text on projectile hits; also prints to 'Harmony.log.txt' on Desktop [Default: false]",
+			Order = 2)]
+		[SettingPropertyGroup(
+			"General",
+			GroupOrder = 0)]
+		public bool DebugOutput { get; set; } = false;
 		#endregion
 
 		#region ARROWS
