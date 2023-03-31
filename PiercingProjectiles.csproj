@@ -69,7 +69,7 @@
       <Version>5.5.5</Version>
     </PackageReference>
     <PackageReference Include="Bannerlord.ReferenceAssemblies">
-      <Version>1.1.0.12734</Version>
+      <Version>1.1.2.14580</Version>
     </PackageReference>
     <PackageReference Include="Lib.Harmony">
       <Version>2.2.2</Version>
@@ -77,8 +77,9 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy /Y "$(SolutionDir)_Module\SubModule.xml" "F:\Steam\SteamApps\common\Mount &amp; Blade II Bannerlord\Modules\PiercingProjectiles\SubModule.xml"
-copy /Y "$(TargetDir)$(TargetName).dll" "F:\Steam\SteamApps\common\Mount &amp; Blade II Bannerlord\Modules\PiercingProjectiles\Bin\Win64_Shipping_Client\$(TargetName).dll"
+    <PostBuildEvent>del "F:\Steam\SteamApps\common\Mount &amp; Blade II Bannerlord\Modules\\PiercingProjectiles" /Q
+xcopy "$(SolutionDir)_Module" "F:\Steam\SteamApps\common\Mount &amp; Blade II Bannerlord\Modules\\PiercingProjectiles" /E /I /Y
+xcopy "$(TargetDir)$(TargetName).dll" "F:\Steam\SteamApps\common\Mount &amp; Blade II Bannerlord\Modules\PiercingProjectiles\Bin\Win64_Shipping_Client\$(TargetName).dll" /Y
 </PostBuildEvent>
   </PropertyGroup>
 </Project>

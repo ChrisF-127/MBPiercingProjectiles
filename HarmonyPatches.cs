@@ -6,26 +6,37 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime;
+using TaleWorlds.CampaignSystem.GameComponents;
+using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.CampaignSystem.ViewModelCollection;
 using TaleWorlds.Core;
 using TaleWorlds.Engine;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
-using static TaleWorlds.MountAndBlade.Mission;
 
 namespace PiercingProjectiles
 {
-	[HarmonyPatch(typeof(Mission))]
-	internal static class Patch_Mission_MissileHitCallback
+	internal static class HarmonyPatches
 	{
-		[HarmonyTranspiler]
-		[HarmonyPatch("MissileHitCallback")]
-		internal static IEnumerable<CodeInstruction> MissileHitCallback(IEnumerable<CodeInstruction> instructions)
+		private static bool _patchApplied = false;
+
+		public static void Initialize()
+		{
+			var harmony = new Harmony("sy.piercingprojectiles");
+
+			harmony.Patch(AccessTools.Method(typeof(Mission), "MissileHitCallback"),
+				transpiler: new HarmonyMethod(typeof(HarmonyPatches), nameof(HarmonyPatches.Mission_MissileHitCallback_Transpiler)));
+
+			if (!_patchApplied)
+				PiercingProjectiles.Message($"{nameof(PiercingProjectiles)}: failed to apply patch", false);
+		}
+
+		internal static IEnumerable<CodeInstruction> Mission_MissileHitCallback_Transpiler(IEnumerable<CodeInstruction> instructions)
 		{
 			var added = false;
 			var list = new List<CodeInstruction>(instructions);
 
-			LocalBuilder lbFlag = null, lbBlow = null; 
+			LocalBuilder lbFlag = null, lbBlow = null;
 			for (int i = 0; i < list.Count; i++)
 			{
 				// find local "flag" (see "MultiplePenetration") variable
@@ -68,7 +79,7 @@ namespace PiercingProjectiles
 					//ldloca.s 1 (TaleWorlds.MountAndBlade.MissionWeapon)
 					list.Insert(i++ + 4, new CodeInstruction(OpCodes.Ldloca_S, 1));
 					//call static System.Void PiercingProjectiles.Patch::DeterminePierce(...)
-					list.Insert(i++ + 4, new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Patch_Mission_MissileHitCallback), nameof(Patch_Mission_MissileHitCallback.DeterminePierce))));
+					list.Insert(i++ + 4, new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(HarmonyPatches), nameof(HarmonyPatches.DeterminePierce))));
 					//ldarg.2 NULL
 					list.Insert(i++ + 4, new CodeInstruction(OpCodes.Ldarg_2));
 
@@ -78,13 +89,14 @@ namespace PiercingProjectiles
 			}
 
 			if (added)
-				PiercingProjectiles.PatchApplied = true;
+				_patchApplied = true;
 
 			return list;
 		}
 
+
 		// Missile pierce handling
-		internal static void DeterminePierce(ref bool pierce, ref int numDamagedAgents, Agent attacker, Agent victim, ref Blow blow, ref MissionWeapon attackerWeapon)
+		private static void DeterminePierce(ref bool pierce, ref int numDamagedAgents, Agent attacker, Agent victim, ref Blow blow, ref MissionWeapon attackerWeapon)
 		{
 			try
 			{
@@ -188,7 +200,7 @@ namespace PiercingProjectiles
 
 				if (PiercingProjectiles.Settings.DebugOutput)
 					PiercingProjectiles.Message(
-						$"After:  Pierce: {(pierce ? 1 : 0)} Dmg: '{blow.InflictedDamage} / {blow.AbsorbedByArmor} ({blow.InflictedDamage / (blow.InflictedDamage + blow.AbsorbedByArmor) * 100.0:N1}%)'", 
+						$"After:  Pierce: {(pierce ? 1 : 0)} Dmg: '{blow.InflictedDamage} / {blow.AbsorbedByArmor} ({blow.InflictedDamage / (blow.InflictedDamage + blow.AbsorbedByArmor) * 100.0:N1}%)'",
 						false, Colors.White);
 			}
 			catch (Exception exc)

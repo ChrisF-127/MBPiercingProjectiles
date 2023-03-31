@@ -14,7 +14,6 @@ namespace PiercingProjectiles
 	public class PiercingProjectiles : MBSubModuleBase
 	{
 		public static MCMSettings Settings { get; private set; }
-		public static bool PatchApplied = false;
 
 		private bool isInitialized = false;
 
@@ -26,7 +25,7 @@ namespace PiercingProjectiles
 				return;
 			try
 			{
-				Settings = GlobalSettings<MCMSettings>.Instance ?? throw new Exception("Settings is null");
+				Settings = GlobalSettings<MCMSettings>.Instance ?? throw new NullReferenceException("Settings is null");
 				isInitialized = true;
 			}
 			catch (Exception exc)
@@ -41,10 +40,7 @@ namespace PiercingProjectiles
 
 			try
 			{
-				new Harmony("sy.piercingprojectiles").PatchAll(Assembly.GetExecutingAssembly());
-
-				if (!PatchApplied)
-					Message($"{nameof(PiercingProjectiles)}: failed to apply patch", false);
+				HarmonyPatches.Initialize();
 			}
 			catch (Exception exc)
 			{
