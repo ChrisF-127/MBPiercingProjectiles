@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime;
+using TaleWorlds.CampaignSystem.Actions;
 using TaleWorlds.CampaignSystem.GameComponents;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.CampaignSystem.ViewModelCollection;
@@ -18,15 +19,20 @@ namespace PiercingProjectiles
 {
 	internal static class HarmonyPatches
 	{
+		private static Harmony _harmony;
 		private static bool _patchApplied = false;
+		private static bool _isInitialized = false;
 
 		public static void Initialize()
 		{
-			var harmony = new Harmony("sy.piercingprojectiles");
+			if (_isInitialized)
+				return;
+			_isInitialized = true;
 
-			harmony.Patch(AccessTools.Method(typeof(Mission), "MissileHitCallback"),
+			_harmony = new Harmony("sy.piercingprojectiles");
+
+			_harmony.Patch(AccessTools.Method(typeof(Mission), "MissileHitCallback"),
 				transpiler: new HarmonyMethod(typeof(HarmonyPatches), nameof(HarmonyPatches.Mission_MissileHitCallback_Transpiler)));
-
 			if (!_patchApplied)
 				PiercingProjectiles.Message($"{nameof(PiercingProjectiles)}: failed to apply patch", false);
 		}
@@ -35,6 +41,8 @@ namespace PiercingProjectiles
 		{
 			var added = false;
 			var list = new List<CodeInstruction>(instructions);
+
+			_patchApplied = false;
 
 			LocalBuilder lbFlag = null, lbBlow = null;
 			for (int i = 0; i < list.Count; i++)
@@ -507,5 +515,48 @@ namespace PiercingProjectiles
 			throw new NotImplementedException();
 		}
 	}
+
+	
+
+		//public static void OnGameStart()
+		//{
+		//	try
+		//	{
+		//		if (PiercingProjectiles.Settings.DebugOutput)
+		//			PiercingProjectiles.Message($"{nameof(OnGameStart)} ({nameof(_isPatched)}: {_isPatched})", false, Colors.Green);
+
+		//		if (_isPatched)
+		//			return;
+		//		_isPatched = true;
+
+		//		_harmony.Patch(AccessTools.Method(typeof(Mission), "MissileHitCallback"),
+		//			transpiler: new HarmonyMethod(typeof(HarmonyPatches), nameof(HarmonyPatches.Mission_MissileHitCallback_Transpiler)));
+		//		if (!_patchApplied)
+		//			PiercingProjectiles.Message($"{nameof(PiercingProjectiles)}: failed to apply patch", false);
+		//	}
+		//	catch (Exception exc)
+		//	{
+		//		PiercingProjectiles.Message($"{nameof(PiercingProjectiles)}: {nameof(HarmonyPatches)}.{nameof(OnGameStart)} failed: {exc.GetType()}: {exc.Message}\n{exc.StackTrace}", false);
+		//	}
+		//}
+		//public static void OnGameEnd()
+		//{
+		//	try
+		//	{
+		//		if (PiercingProjectiles.Settings.DebugOutput)
+		//			PiercingProjectiles.Message($"{nameof(OnGameEnd)} ({nameof(_isPatched)}: {_isPatched})", false, Colors.Red);
+
+		//		if (!_isPatched)
+		//			return;
+		//		_isPatched = false;
+
+		//		_harmony.Unpatch(AccessTools.Method(typeof(Mission), "MissileHitCallback"),
+		//			AccessTools.Method(typeof(HarmonyPatches), nameof(HarmonyPatches.Mission_MissileHitCallback_Transpiler)));
+		//	}
+		//	catch (Exception exc)
+		//	{
+		//		PiercingProjectiles.Message($"{nameof(PiercingProjectiles)}: {nameof(HarmonyPatches)}.{nameof(OnGameEnd)} failed: {exc.GetType()}: {exc.Message}\n{exc.StackTrace}", false);
+		//	}
+		//}
 #endif
 }

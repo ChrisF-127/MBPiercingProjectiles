@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
 
@@ -34,20 +35,20 @@ namespace PiercingProjectiles
 			}
 		}
 
-		protected override void OnSubModuleLoad()
+		public override void OnInitialState()
 		{
-			base.OnSubModuleLoad();
+			base.OnInitialState();
 
 			try
 			{
+				// Initialize here, as otherwise the MissileHitCallback-patch would cause voice callouts to not play
 				HarmonyPatches.Initialize();
 			}
 			catch (Exception exc)
 			{
-				Message($"{nameof(PiercingProjectiles)}: initializing Harmony failed: {exc.GetType()}: {exc.Message}\n{exc.StackTrace}", false);
+				Message($"{nameof(PiercingProjectiles)}: {nameof(OnInitialState)} failed: {exc.GetType()}: {exc.Message}\n{exc.StackTrace}", false);
 			}
 		}
-
 
 		public static void Message(string s, bool stacktrace = true, Color? color = null, bool log = true)
 		{
