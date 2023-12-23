@@ -41,11 +41,24 @@ namespace PiercingProjectiles
 			GroupOrder = 0)]
 		public bool PierceOnKillingBlowOnly { get; set; } = false;
 
+		//[SettingPropertyInteger(
+		//	"Max pass throughs",
+		//	0,
+		//	1000,
+		//	"0",
+		//	RequireRestart = false,
+		//	HintText = "Maximum number of pass throughs (also affects siege weapons!) [Default: 3]",
+		//	Order = 1)]
+		//[SettingPropertyGroup(
+		//	"General",
+		//	GroupOrder = 0)]
+		//public int MaxPassThroughs { get; set; } = 3;
+
 		[SettingPropertyBool(
 			"Debug Text for Projectile Hits",
 			RequireRestart = false,
 			HintText = "Show debug text on projectile hits; also prints to 'Harmony.log.txt' on Desktop [Default: false]",
-			Order = 2)]
+			Order = 3)]
 		[SettingPropertyGroup(
 			"General",
 			GroupOrder = 0)]

@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -14,6 +15,7 @@ using TaleWorlds.Core;
 using TaleWorlds.Engine;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
+using static TaleWorlds.MountAndBlade.Mission;
 
 namespace PiercingProjectiles
 {
@@ -39,7 +41,8 @@ namespace PiercingProjectiles
 
 		internal static IEnumerable<CodeInstruction> Mission_MissileHitCallback_Transpiler(IEnumerable<CodeInstruction> instructions)
 		{
-			var added = false;
+			var added0 = false;
+			var added1 = false;
 			var list = new List<CodeInstruction>(instructions);
 
 			_patchApplied = false;
@@ -47,56 +50,78 @@ namespace PiercingProjectiles
 			LocalBuilder lbFlag = null, lbBlow = null;
 			for (int i = 0; i < list.Count; i++)
 			{
-				// find local "flag" (see "MultiplePenetration") variable
-				if (list[i].opcode == OpCodes.Stloc_S && list[i].operand is LocalBuilder lb0 && lb0.LocalType == typeof(bool))
-					lbFlag = lb0;
-				// find local "blow" variable
-				else if (list[i].opcode == OpCodes.Stloc_S && list[i].operand is LocalBuilder lb1 && lb1.LocalType == typeof(Blow))
-					lbBlow = lb1;
-				// 0    ldfld System.Int32 TaleWorlds.MountAndBlade.CombatLogData::ModifiedDamage
-				// 1    sub NULL
-				// 2    stfld System.Int32 TaleWorlds.MountAndBlade.CombatLogData::InflictedDamage
-				// 3 -- ldarg.2 NULL [Label62, Label63]
-				//   ++ ldloca.s [lbFlag] (System.Boolean) [Label62, Label63]
-				//   ++ ldarga.s 9
-				//   ++ ldarg.s 10
-				//   ++ ldarg.s 11
-				//   ++ ldloca.s [lbBlow] (TaleWorlds.MountAndBlade.Blow)
-				//   ++ ldloca.s 1 (TaleWorlds.MountAndBlade.MissionWeapon)
-				//   ++ call static System.Void PiercingProjectiles.Patch::DeterminePierce(...)
-				//   ++ ldarg.2 NULL
-				// 4    call System.Boolean TaleWorlds.MountAndBlade.AttackCollisionData::get_IsColliderAgent()
-				else if (lbFlag != null && lbBlow != null
-					&& list[i].opcode == OpCodes.Ldfld && list[i].operand is FieldInfo fi0 && fi0.Name == "ModifiedDamage"
-					&& list[i + 1].opcode == OpCodes.Sub
-					&& list[i + 2].opcode == OpCodes.Stfld && list[i + 2].operand is FieldInfo fi2 && fi2.Name == "InflictedDamage"
-					&& list[i + 3].opcode == OpCodes.Ldarg_2
-					&& list[i + 4].opcode == OpCodes.Call && list[i + 4].operand is MethodBase mb && mb.Name == "get_IsColliderAgent")
+				if (!added0)
 				{
-					//ldloca.s [lbFlag] (System.Boolean) [Label62, Label63]
-					list[i + 3].opcode = OpCodes.Ldloca_S;
-					list[i + 3].operand = lbFlag;
-					//ldarga.s 9
-					list.Insert(i++ + 4, new CodeInstruction(OpCodes.Ldarga_S, 9));
-					//ldarg.s 10
-					list.Insert(i++ + 4, new CodeInstruction(OpCodes.Ldarg_S, 10));
-					//ldarg.s 11
-					list.Insert(i++ + 4, new CodeInstruction(OpCodes.Ldarg_S, 11));
-					//ldloca.s [lbBlow] (TaleWorlds.MountAndBlade.Blow)
-					list.Insert(i++ + 4, new CodeInstruction(OpCodes.Ldloca_S, lbBlow));
-					//ldloca.s 1 (TaleWorlds.MountAndBlade.MissionWeapon)
-					list.Insert(i++ + 4, new CodeInstruction(OpCodes.Ldloca_S, 1));
-					//call static System.Void PiercingProjectiles.Patch::DeterminePierce(...)
-					list.Insert(i++ + 4, new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(HarmonyPatches), nameof(HarmonyPatches.DeterminePierce))));
-					//ldarg.2 NULL
-					list.Insert(i++ + 4, new CodeInstruction(OpCodes.Ldarg_2));
+					// find local "flag" (see "MultiplePenetration") variable
+					if (list[i].opcode == OpCodes.Stloc_S && list[i].operand is LocalBuilder lb0 && lb0.LocalType == typeof(bool))
+						lbFlag = lb0;
+					// find local "blow" variable
+					else if (list[i].opcode == OpCodes.Stloc_S && list[i].operand is LocalBuilder lb1 && lb1.LocalType == typeof(Blow))
+						lbBlow = lb1;
+					// 0    ldfld System.Int32 TaleWorlds.MountAndBlade.CombatLogData::ModifiedDamage
+					// 1    sub NULL
+					// 2    stfld System.Int32 TaleWorlds.MountAndBlade.CombatLogData::InflictedDamage
+					// 3 -- ldarg.2 NULL [Label62, Label63]
+					//   ++ ldloca.s [lbFlag] (System.Boolean) [Label62, Label63]
+					//   ++ ldarga.s 9
+					//   ++ ldarg.s 10
+					//   ++ ldarg.s 11
+					//   ++ ldloca.s [lbBlow] (TaleWorlds.MountAndBlade.Blow)
+					//   ++ ldloca.s 1 (TaleWorlds.MountAndBlade.MissionWeapon)
+					//   ++ call static System.Void PiercingProjectiles.Patch::DeterminePierce(...)
+					//   ++ ldarg.2 NULL
+					// 4    call System.Boolean TaleWorlds.MountAndBlade.AttackCollisionData::get_IsColliderAgent()
+					else if (lbFlag != null && lbBlow != null
+						&& list[i].opcode == OpCodes.Ldfld && list[i].operand is FieldInfo fi0 && fi0.Name == "ModifiedDamage"
+						&& list[i + 1].opcode == OpCodes.Sub
+						&& list[i + 2].opcode == OpCodes.Stfld && list[i + 2].operand is FieldInfo fi2 && fi2.Name == "InflictedDamage"
+						&& list[i + 3].opcode == OpCodes.Ldarg_2
+						&& list[i + 4].opcode == OpCodes.Call && list[i + 4].operand is MethodBase mb && mb.Name == "get_IsColliderAgent")
+					{
+						//ldloca.s [lbFlag] (System.Boolean) [Label62, Label63]
+						list[i + 3].opcode = OpCodes.Ldloca_S;
+						list[i + 3].operand = lbFlag;
+						//ldarga.s 9
+						list.Insert(i++ + 4, new CodeInstruction(OpCodes.Ldarga_S, 9));
+						//ldarg.s 10
+						list.Insert(i++ + 4, new CodeInstruction(OpCodes.Ldarg_S, 10));
+						//ldarg.s 11
+						list.Insert(i++ + 4, new CodeInstruction(OpCodes.Ldarg_S, 11));
+						//ldloca.s [lbBlow] (TaleWorlds.MountAndBlade.Blow)
+						list.Insert(i++ + 4, new CodeInstruction(OpCodes.Ldloca_S, lbBlow));
+						//ldloca.s 1 (TaleWorlds.MountAndBlade.MissionWeapon)
+						list.Insert(i++ + 4, new CodeInstruction(OpCodes.Ldloca_S, 1));
+						//call static System.Void PiercingProjectiles.Patch::DeterminePierce(...)
+						list.Insert(i++ + 4, new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(HarmonyPatches), nameof(HarmonyPatches.DeterminePierce))));
+						//ldarg.2 NULL
+						list.Insert(i++ + 4, new CodeInstruction(OpCodes.Ldarg_2));
 
-					added = true;
-					break;
+						added0 = true;
+					}
+				}
+				else if (!added1) // -- doesn't work, there's something else preventing hitting more than 4 times with a missile, but what???
+				{
+					//	// 0 -- ldc.i4.3 NULL
+					//	//   ++ call static PiercingProjectiles.MCMSettings MCM.Abstractions.Base.Global.GlobalSettings`1<PiercingProjectiles.MCMSettings>::get_Instance()
+					//	//   ++ callvirt System.Int32 PiercingProjectiles.MCMSettings::get_MaxPassThroughs()
+					//	// 1    bge.s Label78
+					//	// 2    ldc.i4.1 NULL
+					//	// 3    stloc.s 6 (TaleWorlds.MountAndBlade.Mission+MissileCollisionReaction)
+					//	if (list[i].opcode == OpCodes.Ldc_I4_3
+					//		&& list[i + 1].opcode == OpCodes.Bge_S
+					//		&& list[i + 2].opcode == OpCodes.Ldc_I4_1
+					//		&& list[i + 3].opcode == OpCodes.Stloc_S && list[i + 3].operand is LocalBuilder lb2 && lb2.LocalType == typeof(MissileCollisionReaction))
+					//	{
+					//		list.Insert(i, new CodeInstruction(OpCodes.Call, AccessTools.PropertyGetter(typeof(MCMSettings), nameof(MCMSettings.Instance))));
+					//		list[i + 1] = new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(MCMSettings), nameof(MCMSettings.MaxPassThroughs)));
+
+						added1 = true;
+						break;
+					//}
 				}
 			}
 
-			if (added)
+			if (added0 && added1)
 				_patchApplied = true;
 
 			return list;
@@ -104,7 +129,7 @@ namespace PiercingProjectiles
 
 
 		// Missile pierce handling
-		private static void DeterminePierce(ref bool pierce, ref int numDamagedAgents, Agent attacker, Agent victim, ref Blow blow, ref MissionWeapon attackerWeapon)
+		internal static void DeterminePierce(ref bool pierce, ref int numDamagedAgents, Agent attacker, Agent victim, ref Blow blow, ref MissionWeapon attackerWeapon)
 		{
 			try
 			{
@@ -381,7 +406,7 @@ namespace PiercingProjectiles
 						combatLog.InflictedDamage = blow.InflictedDamage - combatLog.ModifiedDamage;
 					}
 
-					Patch_Mission_MissileHitCallback.DeterminePierce(ref flag8, ref numDamagedAgents, attacker, victim, ref blow, ref attackerWeapon); // <-- ADDED
+					//HarmonyPatches.DeterminePierce(ref flag8, ref numDamagedAgents, attacker, victim, ref blow, ref attackerWeapon); // <-- ADDED
 
 					if (collisionData.IsColliderAgent)
 					{
@@ -417,7 +442,7 @@ namespace PiercingProjectiles
 						RegisterBlow(attacker, victim, null, blow, ref collisionData, in attackerWeapon, ref combatLog);
 					}
 					extraHitParticleIndex = MissionGameModels.Current.DamageParticleModel.GetMissileAttackParticle(attacker, victim, in blow, in collisionData);
-					if (flag8 && numDamagedAgents < 3)
+					if (flag8 && numDamagedAgents < MCMSettings.Instance.MaxPassThroughs) // <-- CHANGED from 3
 					{
 						missileCollisionReaction = MissileCollisionReaction.PassThrough;
 					}
@@ -485,7 +510,7 @@ namespace PiercingProjectiles
 			HandleMissileCollisionReaction(collisionData.AffectorWeaponSlotOrMissileIndex, missileCollisionReaction, attachLocalFrame, isAttachedFrameLocal, attacker, victim, collisionData.AttackBlockedWithShield, collisionData.CollisionBoneIndex, missionObject, velocity, angularVelocity, -1);
 			foreach (MissionBehavior missionBehavior in MissionBehaviors)
 			{
-				missionBehavior.OnMissileHit(attacker, victim, flag5);
+				missionBehavior.OnMissileHit(attacker, victim, flag5, collisionData);
 			}
 			return missileCollisionReaction != MissileCollisionReaction.PassThrough;
 		}
