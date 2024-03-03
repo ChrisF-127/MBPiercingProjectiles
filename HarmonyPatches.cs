@@ -34,7 +34,7 @@ namespace PiercingProjectiles
 			_harmony = new Harmony("sy.piercingprojectiles");
 
 			_harmony.Patch(AccessTools.Method(typeof(Mission), "MissileHitCallback"),
-				transpiler: new HarmonyMethod(typeof(HarmonyPatches), nameof(HarmonyPatches.Mission_MissileHitCallback_Transpiler)));
+				transpiler: new HarmonyMethod(typeof(HarmonyPatches), nameof(Mission_MissileHitCallback_Transpiler)));
 			if (!_patchApplied)
 				PiercingProjectiles.Message($"{nameof(PiercingProjectiles)}: failed to apply patch", false);
 		}
@@ -92,7 +92,7 @@ namespace PiercingProjectiles
 						//ldloca.s 1 (TaleWorlds.MountAndBlade.MissionWeapon)
 						list.Insert(i++ + 4, new CodeInstruction(OpCodes.Ldloca_S, 1));
 						//call static System.Void PiercingProjectiles.Patch::DeterminePierce(...)
-						list.Insert(i++ + 4, new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(HarmonyPatches), nameof(HarmonyPatches.DeterminePierce))));
+						list.Insert(i++ + 4, new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(HarmonyPatches), nameof(DeterminePierce))));
 						//ldarg.2 NULL
 						list.Insert(i++ + 4, new CodeInstruction(OpCodes.Ldarg_2));
 
